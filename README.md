@@ -1,6 +1,6 @@
 # Langevin
 
-A clock bender for the [ER-301 Sound Computer](https://www.orthogonaldevices.com/er-301), after the ADDAC406 Clock Langevin. It takes a clock and makes two new ones, **A** and **B**, whose tempo glides away from the clock and back over a cycle you set. No two intervals inside a cycle are the same, yet every cycle starts back on a beat of the clock.
+A clock bender for the [ER-301 Sound Computer](https://www.orthogonaldevices.com/er-301). It takes a clock and makes two new ones, **A** and **B**, whose tempo glides away from the clock and back over a cycle you set. No two intervals inside a cycle are the same, yet every cycle starts back on a beat of the clock.
 
 Unit title: **Langevin** · mnemonic **Lv** · current version **0.1.0**
 
