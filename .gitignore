@@ -1,0 +1,13 @@
+# Exclude Claude/Agent memory folders and local configurations
+MEMORY.md
+.claude/
+CLAUDE.local.md
+
+build/
+lib/
+test/t
+test/t_asan
+test/t_asan.dSYM/
+*.o
+.DS_Store
+src/libbender_wrap.cpp
