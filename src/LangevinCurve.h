@@ -1,14 +1,14 @@
-/* BenderCurve.h — the tempo curves, plus the sub-display readout.
+/* LangevinCurve.h — the tempo curves, plus the sub-display readout.
  * SPDX-License-Identifier: Apache-2.0
  * Copyright 2026 Nicholas Breinich (nickb808) — see LICENSE and NOTICE.
  *
- * BenderCurve (the main graphic): the tempo curve of a cycle, input tempo
+ * LangevinCurve (the main graphic): the tempo curve of a cycle, input tempo
  * at the bottom line, x M up (or down, below 1). A bright, B faint (one idea
  * bright, standard §8); each with a dot at the beat it is on; the pause is a
  * dotted stretch at the curve's resting tempo. A lamp per output in the
  * corner lights on its trigger.
  *
- * BenderInfo (the sub display): input bpm, then each channel's current bpm
+ * LangevinInfo (the sub display): input bpm, then each channel's current bpm
  * and beat / cycle length.
  *
  * Scalars only from the engine (standard §12d); every virtual inline. */
@@ -17,19 +17,19 @@
 
 #include <od/graphics/Graphic.h>
 #include <od/graphics/constants.h>
-#include "Bender.h"
+#include "Langevin.h"
 #include <cstdio>
 
-namespace bender {
+namespace langevin {
 
-class BenderCurve : public od::Graphic
+class LangevinCurve : public od::Graphic
 {
 public:
-    BenderCurve(int left, int bottom, int width, int height)
+    LangevinCurve(int left, int bottom, int width, int height)
         : od::Graphic(left, bottom, width, height), mpHead(0) {}
-    virtual ~BenderCurve() { if (mpHead) mpHead->release(); }
+    virtual ~LangevinCurve() { if (mpHead) mpHead->release(); }
 
-    void follow(Bender *p)
+    void follow(Langevin *p)
     {
         if (mpHead) mpHead->release();
         mpHead = p;
@@ -39,7 +39,7 @@ public:
 #ifndef SWIGLUA
     virtual void draw(od::FrameBuffer &fb)
     {
-        Bender *h = mpHead;
+        Langevin *h = mpHead;
         const int x0 = mWorldLeft + 2, x1 = mWorldLeft + mWidth - 3;
         const int y0 = mWorldBottom + 6, y1 = mWorldBottom + mHeight - 12;   // y grows upward
         fb.hline(GRAY3, x0, x1, y0);
@@ -89,17 +89,17 @@ public:
 #endif
 
 private:
-    Bender *mpHead;
+    Langevin *mpHead;
 };
 
-class BenderInfo : public od::Graphic
+class LangevinInfo : public od::Graphic
 {
 public:
-    BenderInfo(int left, int bottom, int width, int height)
+    LangevinInfo(int left, int bottom, int width, int height)
         : od::Graphic(left, bottom, width, height), mpHead(0) {}
-    virtual ~BenderInfo() { if (mpHead) mpHead->release(); }
+    virtual ~LangevinInfo() { if (mpHead) mpHead->release(); }
 
-    void follow(Bender *p)
+    void follow(Langevin *p)
     {
         if (mpHead) mpHead->release();
         mpHead = p;
@@ -109,7 +109,7 @@ public:
 #ifndef SWIGLUA
     virtual void draw(od::FrameBuffer &fb)
     {
-        Bender *h = mpHead;
+        Langevin *h = mpHead;
         if (!h) return;
         const int x0 = mWorldLeft + 4;
         const int top = mWorldBottom + mHeight;
@@ -133,7 +133,7 @@ public:
 #endif
 
 private:
-    Bender *mpHead;
+    Langevin *mpHead;
 };
 
-} // namespace bender
+} // namespace langevin

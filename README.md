@@ -1,8 +1,10 @@
-# Bender
+# Langevin
 
-A clock bender for the [ER-301 Sound Computer](https://www.orthogonaldevices.com/er-301), after the ADDAC406 Clock Bender. It takes a clock and makes two new ones, **A** and **B**, whose tempo glides away from the clock and back over a cycle you set. No two intervals inside a cycle are the same, yet every cycle starts back on a beat of the clock.
+A clock bender for the [ER-301 Sound Computer](https://www.orthogonaldevices.com/er-301), after the ADDAC406 Clock Langevin. It takes a clock and makes two new ones, **A** and **B**, whose tempo glides away from the clock and back over a cycle you set. No two intervals inside a cycle are the same, yet every cycle starts back on a beat of the clock.
 
-Unit title: **Bender** · mnemonic **Bd** · current version **0.1.0**
+Unit title: **Langevin** · mnemonic **Lv** · current version **0.1.0**
+
+Named for Paul Langevin, who posed the *twin paradox*: two clocks that run at different rates while apart, then meet again. Here A and B drift away from the clock and land back on its beat at the end of every cycle.
 
 ## One cycle
 
@@ -14,18 +16,18 @@ Each bender's cycle is counted in beats of the incoming clock:
 
 **beats** sets how long steps 1 and 2 take together. **bal** sets where the turn happens: 0 is coming-back only, 1 is going-out only, 0.5 is a symmetrical rise and fall. The curves go from − (slow start) through 0 (straight) to + (fast start).
 
-A cycle **loops**, or with **one-shot** in the menu it runs once and waits for **reset**. **reset** restarts both benders on the next clock beat. When the clock stops, Bender stops, and it starts a fresh cycle when the clock comes back.
+A cycle **loops**, or with **one-shot** in the menu it runs once and waits for **reset**. **reset** restarts both benders on the next clock beat. When the clock stops, Langevin stops, and it starts a fresh cycle when the clock comes back.
 
 ## The taps
 
-Bender doesn't change the channel's sound: its own output is the channel's audio, passed through untouched, so you can put it anywhere in a channel. Its four taps are local sources:
+Langevin doesn't change the channel's sound: its own output is the channel's audio, passed through untouched, so you can put it anywhere in a channel. Its four taps are local sources:
 
 | Tap | What it is |
 |---|---|
 | **A**, **B** | The bent clocks (5 ms triggers). |
 | **A rate**, **B rate** | A CV that follows each tempo curve, on the ER-301's 1 V/oct scale: 0 at the clock's tempo, +0.1 at double. Patch it into Noether's **V/Oct** and the loop's speed bends along with the clock. |
 
-To use one: on any control in the same channel, open its source chooser, go to **Locals**, highlight **Bender**, press **M6** to step through the taps, then press **Enter**. This needs the stolmine firmware, 9.2 or later.
+To use one: on any control in the same channel, open its source chooser, go to **Locals**, highlight **Langevin**, press **M6** to step through the taps, then press **Enter**. This needs the stolmine firmware, 9.2 or later.
 
 ## Display
 
@@ -33,7 +35,7 @@ The tempo curves of both benders, A bright and B faint, each with a dot at the b
 
 ## Building
 
-`make dist` cross-compiles in Docker and packages `build/am335x/bender-<version>.pkg`. `make hosttest` runs the host test suite. See `ER301-UNIT-STANDARD.md` for the rules every unit here follows.
+`make dist` cross-compiles in Docker and packages `build/am335x/langevin-<version>.pkg`. `make hosttest` runs the host test suite. See `ER301-UNIT-STANDARD.md` for the rules every unit here follows.
 
 ## License
 

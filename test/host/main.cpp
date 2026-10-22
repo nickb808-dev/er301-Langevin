@@ -1,6 +1,6 @@
-/* Host verification harness for Bender (no hardware).
+/* Host verification harness for Langevin (no hardware).
  * Build: g++ -std=c++11 -O2 -ffast-math -Itest/host -Isrc \
- *          src/Bender.cpp test/host/main.cpp -o test/t
+ *          src/Langevin.cpp test/host/main.cpp -o test/t
  * Modes: ident · ramp · shape · pause · oneshot · reset · stop · rate ·
  *        audio · viz · nan · cpu · asan
  *
@@ -8,8 +8,8 @@
  * are judged against the integral of the tempo curve: pulses in a cycle =
  * 1 (the cycle's own, on its beat) + whole crossings of the integral of the
  * rate over the cycle's beats. */
-#include "Bender.h"
-#include "BenderCurve.h"
+#include "Langevin.h"
+#include "LangevinCurve.h"
 #include <cstdio>
 #include <cstring>
 #include <cstdlib>
@@ -18,12 +18,12 @@
 #include <string>
 #include <ctime>
 
-using bender::Bender;
+using langevin::Langevin;
 
 static const int kSR = 48000;
 
 struct Rig {
-    Bender h;
+    Langevin h;
     long t = 0;
     std::vector<long> rises[2];          // trigger rising edges, A / B
     std::vector<float> rate[2];          // the rate taps, every sample
@@ -76,22 +76,22 @@ struct Steady {
 struct Never { bool operator()(long) const { return false; } };
 
 // the integral of the rate over [0, B] beats of a shape, numerically (fine)
-static double integral(const Bender::Shape &s, double B)
+static double integral(const Langevin::Shape &s, double B)
 {
     const int n = 200000;
     double sum = 0;
     for (int i = 0; i < n; ++i) {
         bool silent;
         const double b = (i + 0.5) * B / n;
-        const float r = Bender::rateAt(s, b, silent);
+        const float r = Langevin::rateAt(s, b, silent);
         sum += silent ? 0.0 : (double)r;
     }
     return sum * B / n;
 }
 
-static Bender::Shape mk(float mult, int beats, float bal, float left, float right, int pause, bool hold = false)
+static Langevin::Shape mk(float mult, int beats, float bal, float left, float right, int pause, bool hold = false)
 {
-    Bender::Shape s;
+    Langevin::Shape s;
     s.mult = mult; s.beats = beats; s.bal = bal; s.left = left; s.right = right; s.pause = pause; s.hold = hold;
     s.kL = expf(-2.07944154f * left); s.kR = expf(-2.07944154f * right);
     return s;
@@ -126,7 +126,7 @@ static int t_ramp()
     r.shape(1, 1.0f, 8, 1.0f, 0, 0, 0);
     const long P = 4800, first = 300;
     r.run(first + 8 * P * 6 + 10, Steady{P, first}, Never());
-    const Bender::Shape s = mk(4.0f, 8, 1.0f, 0, 0, 0);
+    const Langevin::Shape s = mk(4.0f, 8, 1.0f, 0, 0, 0);
     const double I = integral(s, 8.0);
     const int expect = (int)floor(I + 1e-6);              // the start + crossings 1..I-1
     int bad = 0, notOnEdge = 0, notShrinking = 0;
@@ -165,7 +165,7 @@ static int t_shape()
         r.run(first + 8 * P * 3 + 10, Steady{P, first}, Never());
         const long a = first + 8 * P;
         halves[c] = Rig::count(r.rises[0], a, a + 4 * P);
-        const Bender::Shape s = mk(4.0f, 8, 1.0f, lefts[c], 0, 0);
+        const Langevin::Shape s = mk(4.0f, 8, 1.0f, lefts[c], 0, 0);
         const int expect = (int)ceil(integral(s, 4.0) - 1e-6);   // the start + crossings below the half's integral
         const bool ok = abs(halves[c] - expect) <= 1;
         printf("shape: left curve %+.0f -> %d pulses in the first 4 beats (integral says %d)  %s\n", (double)lefts[c], halves[c], expect, ok ? "ok" : "FAIL");
@@ -258,7 +258,7 @@ static int t_reset()
     const int n1 = Rig::count(r.rises[0], next, next + 8 * P);
     const int n0 = Rig::count(r.rises[0], first + 8 * P, first + 16 * P - 6 * P);   // (cycle 1 was cut at beat 6)
     (void)n0;
-    const Bender::Shape s = mk(3.0f, 8, 1.0f, 0, 0, 0);
+    const Langevin::Shape s = mk(3.0f, 8, 1.0f, 0, 0, 0);
     const int expect = (int)floor(integral(s, 8.0) + 1e-6);
     const bool ok = a && b && n1 == expect;
     printf("reset: mid-cycle -> A restarts on the next beat %d, B %d, then a full cycle of %d pulses (expect %d)  %s\n",
@@ -339,7 +339,7 @@ static int t_audio()
         }
     }
     const bool ok = diff == 0 && r.rises[0].size() > 20 && r.rises[1].size() > 10;
-    printf("audio: %ld frames x 2 channels through Bender, %ld differ (must be 0); A %zu / B %zu pulses  %s\n",
+    printf("audio: %ld frames x 2 channels through Langevin, %ld differ (must be 0); A %zu / B %zu pulses  %s\n",
            n, diff, r.rises[0].size(), r.rises[1].size(), ok ? "ok" : "FAIL");
     return ok ? 0 : 1;
 }
@@ -364,7 +364,7 @@ static int t_viz()
     Rig r;
     r.shape(0, 4.0f, 8, 0.6f, 0.4f, -0.4f, 2);
     r.shape(1, 0.5f, 6, 0.3f, 0, 0, 0);
-    bender::BenderCurve curve(0, 0, 85, 64);
+    langevin::LangevinCurve curve(0, 0, 85, 64);
     curve.follow(&r.h);
     {
         RecFB fb; curve.draw(fb);
@@ -380,7 +380,7 @@ static int t_viz()
         if (!ok) ++fails;
     }
     {
-        bender::BenderInfo info(0, 0, 128, 64);
+        langevin::LangevinInfo info(0, 0, 128, 64);
         info.follow(&r.h);
         RecFB fb; info.draw(fb);
         bool bpm = false; for (auto &w : fb.words) if (w.find("in 600.0 bpm") != std::string::npos) bpm = true;

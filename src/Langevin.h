@@ -1,8 +1,8 @@
-/* Bender.h — a clock bender for the ER-301
+/* Langevin.h — a clock bender for the ER-301
  * SPDX-License-Identifier: Apache-2.0
  * Copyright 2026 Nicholas Breinich (nickb808) — see LICENSE and NOTICE.
  *
- * After the ADDAC406 Clock Bender (user's guide rev. 1, April 2026): two
+ * After the ADDAC406 Clock Langevin (user's guide rev. 1, April 2026): two
  * outputs, A and B, each a pulse train whose TEMPO follows a curve over a
  * cycle counted in beats of the input clock —
  *   stage 1  input tempo -> input x M   (left curve), balance * D beats
@@ -45,13 +45,13 @@
 #include <cstdint>
 #endif
 
-namespace bender {
+namespace langevin {
 
-class Bender : public od::Object
+class Langevin : public od::Object
 {
 public:
-    Bender();
-    virtual ~Bender();
+    Langevin();
+    virtual ~Langevin();
 
     /* ── THE LUA-CALLABLE API ───────────────────────────────────────────
      * EVERYTHING Lua CALLS ON THE HEAD IS DECLARED HERE, ABOVE THE GUARD.
@@ -168,4 +168,4 @@ private:
 #endif // SWIGLUA
 };
 
-} // namespace bender
+} // namespace langevin

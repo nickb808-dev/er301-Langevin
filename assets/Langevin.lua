@@ -1,16 +1,16 @@
 -- SPDX-License-Identifier: Apache-2.0
 -- Copyright 2026 Nicholas Breinich (nickb808) — see LICENSE and NOTICE.
 --
--- Bender — a clock bender, after the ADDAC406. Two benders, A and B, each a
+-- Langevin — a clock bender, after the ADDAC406. Two benders, A and B, each a
 -- pulse train whose tempo glides from the input's to the input x M and back
 -- over a cycle counted in input beats, then pauses (rest / hold); every cycle
 -- starts on an input beat. Taps (local sources, the Huygens pattern): A, B
 -- (triggers), A rate, B rate (1 V/oct CV that follows each curve — into
 -- Noether's V/Oct the loop speed bends with the clock).
 --
--- Bender's own chain output is the channel's AUDIO, passed through
+-- Langevin's own chain output is the channel's AUDIO, passed through
 -- untouched. The taps are its sub-outs after the audio: in any control's
--- source chooser, Locals, highlight Bender, M6 steps through them, Enter
+-- source chooser, Locals, highlight Langevin, M6 steps through them, Enter
 -- picks (stolmine firmware 9.2+, xroot/Source/LocalChooser.lua).
 --
 -- EVERY app.* / self:* CALL HERE ALREADY APPEARS IN A SHIPPED UNIT'S LUA
@@ -27,7 +27,7 @@ local MenuHeader = require "Unit.MenuControl.Header"
 local OptionControl = require "Unit.MenuControl.OptionControl"
 local ply = app.SECTION_PLY
 
-local libbender = require "bender.libbender"
+local liblangevin = require "langevin.liblangevin"
 
 -- THE RUNNING VERSION, ON SCREEN (standard §10c). tools/check-version.sh
 -- fails the build if this drifts from the Makefile or toc.lua.
@@ -35,12 +35,12 @@ local VERSION = "0.1.0"
 
 local kTaps = 4
 
-local Bender = Class {}
-Bender:include(Unit)
+local Langevin = Class {}
+Langevin:include(Unit)
 
-function Bender:init(args)
-  args.title = "Bender"
-  args.mnemonic = "Bd"
+function Langevin:init(args)
+  args.title = "Langevin"
+  args.mnemonic = "Lv"
   -- the chain reads a unit's first output (mono) or first two (stereo): the
   -- audio goes there, the taps follow (read before Unit.init, as MultiBand)
   local chain = args.chain or app.logError("%s.init: chain is missing.", self)
@@ -67,8 +67,8 @@ local function param(self, head, name, port, bias)
   self:addMonoBranch(name, p, "In", p, "Out")
 end
 
-function Bender:onLoadGraph(channelCount)
-  local head = self:addObject("head", libbender.Bender())
+function Langevin:onLoadGraph(channelCount)
+  local head = self:addObject("head", liblangevin.Langevin())
 
   -- CLOCK and RESET: Comparators; the engine finds the rising edges itself
   local clk = self:addObject("clk", app.Comparator())
@@ -114,10 +114,10 @@ end
 -- ── menu ────────────────────────────────────────────────────────────────
 local menu = { "header", "howto", "aRun", "aHold", "bRun", "bHold" }
 
-function Bender:onShowMenu(objects, branches)
+function Langevin:onShowMenu(objects, branches)
   local controls = {}
-  controls.header = MenuHeader { description = "Bender v" .. VERSION }
-  controls.howto = MenuHeader { description = "Taps: Locals, highlight Bd, M6" }
+  controls.header = MenuHeader { description = "Langevin v" .. VERSION }
+  controls.howto = MenuHeader { description = "Taps: Locals, highlight Lv, M6" }
   controls.aRun = OptionControl {
     description = "A runs", option = objects.head:getOption("A Run"),
     choices = { "loop", "one-shot" }, descriptionWidth = 2,
@@ -147,10 +147,10 @@ for _, name in ipairs(controlOrder) do
   views[name] = { "curve", name }
 end
 
-function Bender:onLoadViews(objects, branches)
+function Langevin:onLoadViews(objects, branches)
   local controls = {}
 
-  local CurveView = require "bender.CurveView"
+  local CurveView = require "langevin.CurveView"
   controls.curve = CurveView { name = "curve", head = objects.head, width = 2 * ply }
 
   controls.clk = Gate { button = "clk", description = "clock in",
@@ -183,4 +183,4 @@ function Bender:onLoadViews(objects, branches)
   return controls, views
 end
 
-return Bender
+return Langevin

@@ -8,7 +8,7 @@
 local app = app
 local Class = require "Base.Class"
 local ViewControl = require "Unit.ViewControl"
-local libbender = require "bender.libbender"
+local liblangevin = require "langevin.liblangevin"
 local ply = app.SECTION_PLY
 
 local CurveView = Class {}
@@ -16,11 +16,11 @@ CurveView:include(ViewControl)
 
 function CurveView:init(args)
   ViewControl.init(self, args.name or "curve")
-  self:setClassName("Bender.CurveView")
+  self:setClassName("Langevin.CurveView")
   local head = args.head or app.logError("%s.init: head is missing.", self)
   local width = args.width or (2 * ply)
 
-  self.curve = libbender.BenderCurve(0, 0, width, 64)
+  self.curve = liblangevin.LangevinCurve(0, 0, width, 64)
   self.curve:follow(head)
 
   local graphic = app.Graphic(0, 0, width, 64)
@@ -32,7 +32,7 @@ function CurveView:init(args)
     self:addSpotDescriptor{ center = (i - 0.5) * ply }
   end
 
-  self.info = libbender.BenderInfo(0, 0, 128, 64)
+  self.info = liblangevin.LangevinInfo(0, 0, 128, 64)
   self.info:follow(head)
   self.subGraphic = app.Graphic(0, 0, 128, 64)
   self.subGraphic:addChild(self.info)

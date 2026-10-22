@@ -1,16 +1,16 @@
-/* Bender.cpp — a clock bender for the ER-301
+/* Langevin.cpp — a clock bender for the ER-301
  * SPDX-License-Identifier: Apache-2.0
  * Copyright 2026 Nicholas Breinich (nickb808) — see LICENSE and NOTICE.
  *
- * See Bender.h for the design. Audio-thread rules: no allocation, no integer
+ * See Langevin.h for the design. Audio-thread rules: no allocation, no integer
  * divide or modulo, inlets sanitised at the read, NaN-proof accumulators. */
 
-#include "Bender.h"
+#include "Langevin.h"
 #include <cmath>
 
-namespace bender {
+namespace langevin {
 
-Bender::Bender()
+Langevin::Langevin()
 {
     addInput(mLeftIn);
     addInput(mRightIn);
@@ -40,7 +40,7 @@ Bender::Bender()
     addOption(mHoldB);
 }
 
-Bender::~Bender() {}
+Langevin::~Langevin() {}
 
 /* ── the curve ─────────────────────────────────────────────────────────── */
 
@@ -53,7 +53,7 @@ static inline float shapeCurve(float u, float k)
     return u / (u + k * (1.0f - u));
 }
 
-float Bender::rateAt(const Shape &s, double b, bool &silent)
+float Langevin::rateAt(const Shape &s, double b, bool &silent)
 {
     silent = false;
     const float M = s.mult;
@@ -75,25 +75,25 @@ float Bender::rateAt(const Shape &s, double b, bool &silent)
 
 /* ── Lua-callable API (UI thread; scalars only) ────────────────────────── */
 
-int Bender::hasClock()
+int Langevin::hasClock()
 {
     if (mEdges == 0 || mStopped) return 0;
     return 1;
 }
 
-float Bender::getInputBpm()
+float Langevin::getInputBpm()
 {
     if (!hasClock() || mPeriod <= 0) return 0.0f;
     return 60.0f * kSampleRate / (float)mPeriod;
 }
 
-float Bender::getRate(int ch)
+float Langevin::getRate(int ch)
 {
     if (ch < 0 || ch >= kChannels) return 1.0f;
     return mCh[ch].rate;
 }
 
-float Bender::getBpm(int ch)
+float Langevin::getBpm(int ch)
 {
     if (ch < 0 || ch >= kChannels) return 0.0f;
     const Chan &c = mCh[ch];
@@ -101,30 +101,30 @@ float Bender::getBpm(int ch)
     return getInputBpm() * c.rate;
 }
 
-int Bender::getBeat(int ch)
+int Langevin::getBeat(int ch)
 {
     if (ch < 0 || ch >= kChannels || !mCh[ch].running) return 0;
     return mCh[ch].beat + 1;
 }
 
-int Bender::getTotal(int ch)
+int Langevin::getTotal(int ch)
 {
     if (ch < 0 || ch >= kChannels) return 0;
     return mCh[ch].s.beats + mCh[ch].s.pause;
 }
 
-int Bender::getRunning(int ch)
+int Langevin::getRunning(int ch)
 {
     return (ch >= 0 && ch < kChannels && mCh[ch].running) ? 1 : 0;
 }
 
-int Bender::getLamp(int ch)
+int Langevin::getLamp(int ch)
 {
     if (ch < 0 || ch >= kChannels) return 0;
     return (mCh[ch].lamp > 0 || mCh[ch].high > 0) ? 1 : 0;
 }
 
-float Bender::curveAt(int ch, float x)
+float Langevin::curveAt(int ch, float x)
 {
     if (ch < 0 || ch >= kChannels) return 1.0f;
     const Shape &s = mCh[ch].s;
@@ -136,7 +136,7 @@ float Bender::curveAt(int ch, float x)
 
 /* ── audio thread ──────────────────────────────────────────────────────── */
 
-void Bender::readShape(Shape &s, od::Inlet &mult, od::Inlet &beats, od::Inlet &bal,
+void Langevin::readShape(Shape &s, od::Inlet &mult, od::Inlet &beats, od::Inlet &bal,
                        od::Inlet &left, od::Inlet &right, od::Inlet &pause,
                        od::Option &run, od::Option &hold)
 {
@@ -153,7 +153,7 @@ void Bender::readShape(Shape &s, od::Inlet &mult, od::Inlet &beats, od::Inlet &b
     s.kR = expf(-2.07944154f * s.right);
 }
 
-void Bender::startCycle(Chan &c)
+void Langevin::startCycle(Chan &c)
 {
     c.running = true;
     c.beat = 0;
@@ -164,7 +164,7 @@ void Bender::startCycle(Chan &c)
     if (!silent) fire(c, c.rate);              // every cycle begins ON a beat
 }
 
-void Bender::fire(Chan &c, float rate)
+void Langevin::fire(Chan &c, float rate)
 {
     int len = kTrigFrames;
     if (mPeriod > 0 && rate > 0.0f) {
@@ -176,7 +176,7 @@ void Bender::fire(Chan &c, float rate)
     c.lamp = len > kLampFrames ? len : kLampFrames;
 }
 
-void Bender::onEdge()
+void Langevin::onEdge()
 {
     const bool hadPeriod = mPeriod > 0;   // was the beat that just ended integrated?
     if (mEdges > 0 && mSince < kClkTimeout && !mStopped) mPeriod = mSince;
@@ -217,7 +217,7 @@ void Bender::onEdge()
     }
 }
 
-void Bender::process()
+void Langevin::process()
 {
     // the audio: an exact pass-through (standard §4)
     {
@@ -300,4 +300,4 @@ void Bender::process()
     }
 }
 
-} // namespace bender
+} // namespace langevin

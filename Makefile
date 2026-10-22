@@ -1,7 +1,7 @@
-# Makefile — Bender ER-301 package
+# Makefile — Langevin ER-301 package
 #
-# Cross-compiles Bender.cpp + SWIG wrapper into
-# lib/am335x/libbender.so for the ER-301 (AM3358, ARM Cortex-A8).
+# Cross-compiles Langevin.cpp + SWIG wrapper into
+# lib/am335x/liblangevin.so for the ER-301 (AM3358, ARM Cortex-A8).
 #
 # Follows er-301/scripts/tutorial.mk exactly for am335x flags:
 #   - ARM flags: -mcpu=cortex-a8 -mfpu=neon -mfloat-abi=hard -mabi=aapcs
@@ -35,8 +35,8 @@ ER301_SDK ?= $(HOME)/er-301
 # Default uses Docker (macOS-friendly).
 TOOLCHAIN ?= docker
 
-PKG     := bender
-MODULE  := libbender
+PKG     := langevin
+MODULE  := liblangevin
 VERSION := 0.1.0
 ARCH    := am335x
 
@@ -115,8 +115,8 @@ DOCKER_IMAGE := er301-crosscompile:latest
 
 # ── OBJECT FILES ──────────────────────────────────────────────────────────────
 
-OBJ_ENG    := $(OBJS_DIR)/Bender.o
-OBJ_WRAP   := $(OBJS_DIR)/libbender_wrap.o
+OBJ_ENG    := $(OBJS_DIR)/Langevin.o
+OBJ_WRAP   := $(OBJS_DIR)/liblangevin_wrap.o
 OBJ_COMPAT := $(OBJS_DIR)/compat.o
 
 # ── PHONY TARGETS ─────────────────────────────────────────────────────────────
@@ -143,7 +143,7 @@ dist:
 
 swig: $(SWIG_WRAP)
 
-$(SWIG_WRAP): $(SWIG_FILE) $(SRCDIR)/Bender.h $(SRCDIR)/BenderCurve.h
+$(SWIG_WRAP): $(SWIG_FILE) $(SRCDIR)/Langevin.h $(SRCDIR)/LangevinCurve.h
 	@echo ">>> SWIG: generating Lua wrapper..."
 	swig -c++ -lua \
 		-no-old-metatable-bindings \
@@ -169,12 +169,12 @@ $(OUTDIR):
 $(OBJS_DIR): | $(OUTDIR)
 	mkdir -p $@
 
-$(OBJ_ENG): $(SRCDIR)/Bender.cpp $(SRCDIR)/Bender.h $(SRCDIR)/BenderCurve.h | $(OBJS_DIR)
-	@echo ">>> CC Bender.cpp"
+$(OBJ_ENG): $(SRCDIR)/Langevin.cpp $(SRCDIR)/Langevin.h $(SRCDIR)/LangevinCurve.h | $(OBJS_DIR)
+	@echo ">>> CC Langevin.cpp"
 	$(CXX) $(CXXFLAGS_DSP) -c -o $@ $<
 
 $(OBJ_WRAP): $(SWIG_WRAP) | $(OBJS_DIR)
-	@echo ">>> CC libbender_wrap.cpp"
+	@echo ">>> CC liblangevin_wrap.cpp"
 	$(CXX) $(CXXFLAGS_WRAP) -c -o $@ $<
 
 $(OBJ_COMPAT): $(SRCDIR)/compat.cpp | $(OBJS_DIR)
@@ -276,7 +276,7 @@ prune-old-pkgs:
 # hard gate on packaging because nothing else catches it: it builds, links and
 # installs cleanly, then crashes the moment the menu opens. (v0.1.3-0.1.5.)
 check-api:
-	@sh tools/check-swig-api.sh src/Bender.h assets/Bender.lua assets/CurveView.lua
+	@sh tools/check-swig-api.sh src/Langevin.h assets/Langevin.lua assets/CurveView.lua
 
 # Every od::Inlet / od::Outlet must be addInput()/addOutput()'d, and every
 # port Lua connects to on the head must be one of them. Noether 0.8.0 declared
@@ -284,7 +284,7 @@ check-api:
 # registered it — green on the host (the stub addInput is a no-op), a failed
 # connect on the device.
 check-ports:
-	@sh tools/check-ports.sh src/Bender.h src/Bender.cpp assets/Bender.lua
+	@sh tools/check-ports.sh src/Langevin.h src/Langevin.cpp assets/Langevin.lua
 
 # A Lua file-local used ABOVE its declaration is a nil GLOBAL — no syntax
 # error, no load error, no warning, just "attempt to call a nil value" at
@@ -300,12 +300,12 @@ check-lua:
 # The version the unit DISPLAYS must equal the version it is PACKAGED as.
 check-version:
 	@sh tools/check-version.sh Makefile assets/toc.lua \
-		assets/Bender.lua assets/CurveView.lua
+		assets/Langevin.lua assets/CurveView.lua
 
-$(PKGFILE): $(OUTLIB) assets/toc.lua assets/Bender.lua assets/CurveView.lua | $(PKGDIR)
+$(PKGFILE): $(OUTLIB) assets/toc.lua assets/Langevin.lua assets/CurveView.lua | $(PKGDIR)
 	@echo ">>> PKG $(PKGFILE)"
-	cd assets && zip -j ../$(PKGFILE) toc.lua Bender.lua CurveView.lua
-	cd $(OUTDIR) && zip -j ../../$(PKGFILE) libbender.so
+	cd assets && zip -j ../$(PKGFILE) toc.lua Langevin.lua CurveView.lua
+	cd $(OUTDIR) && zip -j ../../$(PKGFILE) liblangevin.so
 	zip -j $(PKGFILE) LICENSE NOTICE
 	@echo ">>> Done: $(PKGFILE)"
 
@@ -323,11 +323,11 @@ clean:
 
 help:
 	@echo ""
-	@echo "Bender build targets (recommended order for macOS):"
+	@echo "Langevin build targets (recommended order for macOS):"
 	@echo "  make docker-image                           Build the Docker image (once)"
 	@echo "  make swig-docker ER301_SDK=~/er-301         Generate SWIG wrapper (inside Docker)"
 	@echo "  make docker-build ER301_SDK=~/er-301        Cross-compile inside Docker"
-	@echo "  make pkg                                    Package into build/am335x/bender-$(VERSION).pkg"
+	@echo "  make pkg                                    Package into build/am335x/langevin-$(VERSION).pkg"
 	@echo ""
 	@echo "Alternatives:"
 	@echo "  make swig ER301_SDK=~/er-301                Generate SWIG wrapper (host, needs brew install swig)"
@@ -337,9 +337,9 @@ help:
 
 # ── host tests (no hardware) ────────────────────────────────────────────────
 hosttest: check-api check-ports check-version check-lua
-	g++ -std=c++11 -O2 -ffast-math -Itest/host -Isrc src/Bender.cpp test/host/main.cpp -o test/t
+	g++ -std=c++11 -O2 -ffast-math -Itest/host -Isrc src/Langevin.cpp test/host/main.cpp -o test/t
 	./test/t ident && ./test/t ramp && ./test/t shape && ./test/t pause && ./test/t oneshot \
 	  && ./test/t reset && ./test/t stop && ./test/t rate && ./test/t audio && ./test/t viz && ./test/t nan && ./test/t cpu
 	g++ -std=c++17 -O1 -g -fsanitize=address,undefined -Itest/host -Isrc \
-	  src/Bender.cpp test/host/main.cpp -o test/t_asan
+	  src/Langevin.cpp test/host/main.cpp -o test/t_asan
 	./test/t_asan asan

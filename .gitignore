@@ -10,4 +10,4 @@ test/t_asan
 test/t_asan.dSYM/
 *.o
 .DS_Store
-src/libbender_wrap.cpp
+src/liblangevin_wrap.cpp
